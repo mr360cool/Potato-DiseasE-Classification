@@ -28,7 +28,15 @@ app.add_middleware(
 )
 
 model_path = Path(__file__).resolve().parent.parent / "saved_model" / "1.keras"
-MODEL = tf.keras.models.load_model(model_path, compile=False)
+loaded_model = tf.keras.models.load_model(model_path, compile=False)
+model_input = tf.keras.Input(shape=loaded_model.input_shape[1:])
+MODEL = tf.keras.models.clone_model(
+    loaded_model,
+    input_tensors=model_input,
+    recursive=True,
+)
+MODEL.set_weights(loaded_model.get_weights())
+del loaded_model
 
 
 CLASS_NAMES = ["Potato___Early_blight", "Potato___Late_blight", "Potato___healthy"]
@@ -50,10 +58,7 @@ def read_file_as_image(data) -> np.ndarray:
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     image = read_file_as_image(await file.read())
-    batch_size = MODEL.input_shape[0] or 1
-    img_batch = np.repeat(np.expand_dims(image, 0), batch_size, axis=0)
-
-    predictions = MODEL.predict(img_batch, verbose=0)
+    predictions = MODEL.predict(np.expand_dims(image, 0), verbose=0)
 
     predicted_class = CLASS_NAMES[np.argmax(predictions[0])]
     confidence = np.max(predictions[0])
