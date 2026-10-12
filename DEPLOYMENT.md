@@ -1,7 +1,7 @@
 # Deployment
 
 This repository is a React frontend and FastAPI API. Deploy both services on
-Render; it is not a Streamlit application.
+Render.
 
 ## 1. Deploy the API on Render
 
