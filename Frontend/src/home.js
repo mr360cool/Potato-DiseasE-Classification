@@ -155,9 +155,8 @@ export const ImageUpload = () => {
     if (image) {
       let formData = new FormData();
       formData.append("file", selectedFile);
-      // <-- FIX #2: Hardcode the API URL. The previous error was because process.env.REACT_APP_API_URL was undefined.
-      // Make sure this URL matches where your backend is running.
-      const apiUrl = "http://127.0.0.1:5000/predict";
+      const apiUrl =
+        process.env.REACT_APP_API_URL || "http://127.0.0.1:5000/predict";
       let res = await axios({
         method: "post",
         url: apiUrl,
