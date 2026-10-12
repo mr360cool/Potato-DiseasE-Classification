@@ -40,17 +40,20 @@ async def ping():
 
 
 def read_file_as_image(data) -> np.ndarray:
-    image = np.array(Image.open(BytesIO(data)))
-    return image
+    image = Image.open(BytesIO(data)).convert("RGB")
+    input_height, input_width = MODEL.input_shape[1:3]
+    if input_height is not None and input_width is not None:
+        image = image.resize((input_width, input_height))
+    return np.asarray(image)
 
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     image = read_file_as_image(await file.read())
-    img_batch = np.expand_dims(image, 0)
+    batch_size = MODEL.input_shape[0] or 1
+    img_batch = np.repeat(np.expand_dims(image, 0), batch_size, axis=0)
 
-    # --- CHANGE 3: The loaded model directly returns the prediction tensor ---
-    predictions = MODEL.predict(img_batch)
+    predictions = MODEL.predict(img_batch, verbose=0)
 
     predicted_class = CLASS_NAMES[np.argmax(predictions[0])]
     confidence = np.max(predictions[0])
